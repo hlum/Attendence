@@ -10,6 +10,8 @@ import CoreNFC
 
 
 class NFCManager:NSObject,NFCNDEFReaderSessionDelegate,ObservableObject{
+    var onCardDataUpdate:((String) -> ())?
+    
     
     func readerSession(_ session: NFCNDEFReaderSession, didInvalidateWithError error: any Error) {
         if error.localizedDescription.contains("First NDEF tag read"){
@@ -35,8 +37,40 @@ class NFCManager:NSObject,NFCNDEFReaderSessionDelegate,ObservableObject{
     }
     
     func readerSession(_ session: NFCNDEFReaderSession, didDetectNDEFs messages: [NFCNDEFMessage]) {
-        print("NFCNDEFMessage: \(messages[0].records[0].description)")
-        
+        for message in messages{
+            let cardData = processNFCNDEFMessage(message)
+            onCardDataUpdate?(cardData)
+        }
+    }
+    
+    
+    func processNFCNDEFMessage(_ message:NFCNDEFMessage) -> String{
+        let records = message.records
+        var message :String = "Opps"
+        for record in records{
+            switch record.typeNameFormat {
+                
+            case .empty:
+                print("empty")
+            case .nfcWellKnown:
+                message = String(data: record.payload, encoding: .utf8) ?? "Can't encode to UTF8"
+            case .media:
+                print("media")
+            case .absoluteURI:
+                print("absoluteURI")
+            case .nfcExternal:
+                print("nfcExternal")
+            case .unknown:
+                print("unknown")
+            case .unchanged:
+                print("unchanged")
+            @unknown default:
+                print("unknown default")
+            }
+            
+        }
+        return message
+
     }
     
     
