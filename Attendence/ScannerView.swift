@@ -8,14 +8,14 @@
 import SwiftUI
 
 final class ScannerViewModel:ObservableObject {
-    @Published var cardData:String = ""
+    @Published var nfcData:NFCData? = nil
     var nfcManager:NFCManager
     
     init(){
         nfcManager = NFCManager()
-        nfcManager.onCardDataUpdate = {[weak self] cardData in
+        nfcManager.onCardDataUpdate = {[weak self] nfcData in
             DispatchQueue.main.async {
-                self?.cardData = cardData
+                self?.nfcData = nfcData
             }
         }
     }
@@ -30,7 +30,7 @@ struct ScannerView: View {
     @ObservedObject var vm = ScannerViewModel()
     var body: some View {
         VStack {
-            Text(vm.cardData)
+            Text(vm.nfcData?.name ?? "No Data")
                 .foregroundStyle(Color.black)
                 .font(.title)
             Button {

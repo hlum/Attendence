@@ -10,7 +10,7 @@ import CoreNFC
 
 
 class NFCManager:NSObject,NFCNDEFReaderSessionDelegate,ObservableObject{
-    var onCardDataUpdate:((String) -> ())?
+    var onCardDataUpdate:((NFCData) -> ())?
     
     
     func readerSession(_ session: NFCNDEFReaderSession, didInvalidateWithError error: any Error) {
@@ -38,24 +38,25 @@ class NFCManager:NSObject,NFCNDEFReaderSessionDelegate,ObservableObject{
     
     func readerSession(_ session: NFCNDEFReaderSession, didDetectNDEFs messages: [NFCNDEFMessage]) {
         for message in messages{
-            let cardData = processNFCNDEFMessage(message)
+            guard let cardData = processNFCNDEFMessage(message)else{
+                print("Error processing NFC Data")
+                continue
+            }
             onCardDataUpdate?(cardData)
         }
     }
     
     
-    func processNFCNDEFMessage(_ message:NFCNDEFMessage) -> String{
+    func processNFCNDEFMessage(_ message:NFCNDEFMessage) -> NFCData?{
         let records = message.records
-        var message :String = "Opps"
         for record in records{
             switch record.typeNameFormat {
-                
             case .empty:
                 print("empty")
             case .nfcWellKnown:
-                message = String(data: record.payload, encoding: .utf8) ?? "Can't encode to UTF8"
+                print("nfcWellKnown")
             case .media:
-                print("media")
+                return decodeNFCData(from: record.payload)
             case .absoluteURI:
                 print("absoluteURI")
             case .nfcExternal:
@@ -67,11 +68,22 @@ class NFCManager:NSObject,NFCNDEFReaderSessionDelegate,ObservableObject{
             @unknown default:
                 print("unknown default")
             }
-            
         }
-        return message
-
+        return nil
     }
     
+    private func decodeNFCData(from data: Data) -> NFCData? {
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .iso8601
+        
+        do {
+            let decodedData = try decoder.decode(NFCData.self, from: data)
+            return decodedData
+        } catch {
+            print("Error decoding NFC data: \(error.localizedDescription)")
+            print("Raw data: \(String(data: data, encoding: .utf8) ?? "Unable to print data as UTF-8")")
+            return nil
+        }
+    }
     
 }
