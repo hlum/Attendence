@@ -15,6 +15,9 @@ struct NFCData: Codable {
     var birthDate:Date
     var className:String
     var major:String
+    var profileUrl:String
+    
+    
     
     
     enum CodingKeys: String, CodingKey {
@@ -24,6 +27,7 @@ struct NFCData: Codable {
         case birthDate = "birth_date"
         case className = "class_name"
         case major = "major"
+        case profileUrl = "profile_url"
     }
     
     //classNameからCM ならモバイルアプリケーション開発科とか計算して出せそう　後回し
